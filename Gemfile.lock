@@ -1,0 +1,34 @@
+PATH
+  remote: .
+  specs:
+    bzconsole (0.1.0)
+      bugzilla
+      gruff (~> 0)
+      highline
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bugzilla (0.10.0)
+      gruff (~> 0)
+      highline
+      xmlrpc (~> 0.3.0)
+    gruff (0.7.0)
+      rmagick (~> 2.13, >= 2.13.4)
+    highline (1.7.10)
+    minitest (5.11.3)
+    rake (10.5.0)
+    rmagick (2.16.0)
+    xmlrpc (0.3.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.16)
+  bzconsole!
+  minitest (~> 5.0)
+  rake (~> 10.0)
+
+BUNDLED WITH
+   1.16.1
