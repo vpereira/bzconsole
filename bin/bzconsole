@@ -1,4 +1,6 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
+
 # bzconsole
 # Copyright (C) 2010-2014 Red Hat, Inc.
 #
@@ -22,7 +24,6 @@ require 'optparse'
 require 'time'
 require 'yaml'
 require_relative '../lib/bzconsole'
-
 
 module BzConsole
   class Setup < CommandTemplate
@@ -86,13 +87,14 @@ module BzConsole
       }
 
       template.each do |_k, v|
-        @plugin.run(:pre, v[:URL].sub(/\Ahttps?:\/\//, '').sub(/\/\Z/, ''), :setup, v)
+        @plugin.run(:pre, v[:URL].sub(%r{\Ahttps?://}, '').sub(%r{/\Z}, ''), :setup, v)
       end
 
       fname = opts[:config].nil? ? @defaultyamlfile : opts[:config]
       if File.exist?(fname)
         raise '.bzconsole.yml already exists. please remove it first to proceed to the next step.'
       end
+
       File.open(fname, File::CREAT | File::WRONLY, 0o600) do |f|
         f.write(template.to_yaml)
       end
@@ -136,7 +138,7 @@ module BzConsole
         begin
           result = user.login('login' => login, 'password' => pass, 'remember' => true)
           cconf[host] = xmlrpc.cookie
-          save_config({config: opts[:command][:output] }, cconf)
+          save_config({ config: opts[:command][:output] }, cconf)
         rescue XMLRPC::FaultException => e
           printf("E: %s\n", e.message)
         end
@@ -244,9 +246,9 @@ module BzConsole
           result = if opts[:command][:summary] == true
                      bug.get_bugs(nnn.split(','))
                    elsif opts[:command][:details] == true
-            bug.get_bugs(nnn.split(','), ::Bugzilla::Bug::FIELDS_DETAILS)
+                     bug.get_bugs(nnn.split(','), ::Bugzilla::Bug::FIELDS_DETAILS)
                    else
-            bug.get_bugs(nnn.split(','), nil)
+                     bug.get_bugs(nnn.split(','), nil)
                    end
 
           @plugin.run(:post, host, :getbug, result)
@@ -351,15 +353,18 @@ module BzConsole
         timeout = opts[:timeout].nil? ? 60 : opts[:timeout]
 
         @plugin.run(:pre, host, :search, opts[:command][:query])
-        xmlrpc = Bugzilla::XMLRPC.new(host, port:port, path: path, proxy_host:
+        xmlrpc = Bugzilla::XMLRPC.new(host, port: port, path: path, proxy_host:
                                       proxy_host, proxy_port: proxy_port, timeout:
                                       timeout, http_basic_auth_user: uri.user, http_basic_auth_pass: uri.password, debug: opts[:debug])
         user = Bugzilla::User.new(xmlrpc)
         user.session(login, pass) do
           bug = Bugzilla::Bug.new(xmlrpc)
-          opts[:command][:query][:product].map! do |x|
-            info.include?(:ProductAliases) &&
-              info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x end if opts[:command][:query].include?(:product)
+          if opts[:command][:query].include?(:product)
+            opts[:command][:query][:product].map! do |x|
+              info.include?(:ProductAliases) &&
+                info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x
+            end
+          end
 
           result = bug.search(opts[:command][:query])
 
@@ -436,7 +441,7 @@ module BzConsole
 
         @plugin.run(:pre, host, :show, opts)
 
-        xmlrpc = Bugzilla::XMLRPC.new(host, port:port, path: path, proxy_host:
+        xmlrpc = Bugzilla::XMLRPC.new(host, port: port, path: path, proxy_host:
                                       proxy_host, proxy_port: proxy_port, timeout:
                                       timeout, http_basic_auth_user: uri.user, http_basic_auth_pass: uri.password, debug: opts[:debug])
         user = Bugzilla::User.new(xmlrpc)
@@ -557,6 +562,7 @@ module BzConsole
       g.labels = timeline.to_hash
       data.each do |k, v|
         next unless k == 'NEW' || k == 'OPEN' || k == 'CLOSED'
+
         g.data(k, v)
       end
       g.write(format('trend-%s', opts[:command][:metrics][:output]))
@@ -603,7 +609,9 @@ module BzConsole
         user.session(login, pass) do
           bug = Bugzilla::Bug.new(xmlrpc)
 
-          opts[:command][:query][:product].map! { |x| info.include?(:ProductAliases) && info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x } if opts[:command][:query].include?(:product)
+          if opts[:command][:query].include?(:product)
+            opts[:command][:query][:product].map! { |x| info.include?(:ProductAliases) && info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x }
+          end
 
           ts = opts[:command][:metrics][:begin_date] || Time.utc(Time.new.year, 1, 1)
           te = opts[:command][:metrics][:end_date] || Time.utc(Time.new.year + 1, 1, 1) - 1
@@ -621,13 +629,15 @@ module BzConsole
 
           @plugin.run(:pre, host, :metrics, searchopts, opts[:metrics])
 
-          raise NoMethodError, 'No method to deal with the query' if searchopts == opts[:command][:query]
+          if searchopts == opts[:command][:query]
+            raise NoMethodError, 'No method to deal with the query'
+          end
 
           while ts < te
             searchopts = opts[:command][:query].clone
 
-              # don't rely on the status to deal with NEW bugs.
-              # unable to estimate the case bugs closed quickly
+            # don't rely on the status to deal with NEW bugs.
+            # unable to estimate the case bugs closed quickly
             if opts[:command][:metrics][:x_coordinate] == :weekly
               d = Date.new(ts.year, ts.month, ts.day)
               de = Date.commercial(d.year, d.cweek, 7)
@@ -646,8 +656,8 @@ module BzConsole
 
             new = result.include?('bugs') ? result['bugs'].length : 0
 
-              # for open bugs
-              # what we are interested in here would be how many bugs still keeps open.
+            # for open bugs
+            # what we are interested in here would be how many bugs still keeps open.
             searchopts = opts[:command][:query].clone
             searchopts[:last_change_time] = drange
             searchopts[:status] = '__open__'
@@ -662,10 +672,10 @@ module BzConsole
             modified = result.include?('bugs') ? result['bugs'].map { |x| x['status'] == 'MODIFIED' ? x : nil }.compact.length : 0
             on_qa = result.include?('bugs') ? result['bugs'].map { |x| x['status'] == 'ON_QA' ? x : nil }.compact.length : 0
 
-              # send a separate query for closed.
-              # just counting CLOSED the above is meaningless.
-              # what we are interested in here would be how much bugs are
-              # actually closed, but not how many closed bugs one worked on.
+            # send a separate query for closed.
+            # just counting CLOSED the above is meaningless.
+            # what we are interested in here would be how much bugs are
+            # actually closed, but not how many closed bugs one worked on.
             searchopts = opts[:command][:query].clone
             searchopts[:last_change_time] = drange
             searchopts[:status] = 'CLOSED'
@@ -678,7 +688,7 @@ module BzConsole
 
             closed = result.include?('bugs') ? result['bugs'].length : 0
 
-              # obtain the information for open bugs that closed now
+            # obtain the information for open bugs that closed now
             searchopts = opts[:command][:query].clone
             searchopts[:status] = 'CLOSED'
             searchopts[:metrics_closed_after] = drange[1] + 1
@@ -691,7 +701,7 @@ module BzConsole
 
             open_bugs = result.include?('bugs') ? result['bugs'].length : 0
 
-              # obtain the information for open bugs
+            # obtain the information for open bugs
             searchopts = opts[:command][:query].clone
             searchopts[:metrics_not_closed] = drange[1]
 
@@ -779,7 +789,7 @@ module BzConsole
 
       @plugin.run(:pre, host, :newbug, opts)
 
-      xmlrpc = Bugzilla::XMLRPC.new(host, port:port, path: path, proxy_host:
+      xmlrpc = Bugzilla::XMLRPC.new(host, port: port, path: path, proxy_host:
                                     proxy_host, proxy_port: proxy_port, timeout:
                                     timeout, http_basic_auth_user: uri.user, http_basic_auth_pass: uri.password, debug: opts[:debug])
       user = Bugzilla::User.new(xmlrpc)
@@ -897,7 +907,9 @@ module BzConsole
         user.session(login, pass) do
           bug = Bugzilla::Bug.new(xmlrpc)
 
-          opts[:command][:query][:product].map! { |x| info.include?(:ProductAliases) && info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x } if opts[:command][:query].include?(:product)
+          if opts[:command][:query].include?(:product)
+            opts[:command][:query][:product].map! { |x| info.include?(:ProductAliases) && info[:ProductAliases].include?(x) ? info[:ProductAliases][x] : x }
+          end
           ts = opts[:command][:responsetime][:begin_date] || Time.utc(Time.new.year, 1, 1)
           te = opts[:command][:responsetime][:end_date] || Time.utc(Time.new.year + 1, 1, 1) - 1
           searchopts = opts[:command][:query].clone
@@ -922,7 +934,7 @@ module BzConsole
   end # class
 end # module BzConsole
 
-if $0 == __FILE__
+if $PROGRAM_NAME == __FILE__
   opts = {}
   opts[:command] = {}
   subargv = []
@@ -933,8 +945,8 @@ if $0 == __FILE__
     opt.separator 'Global options:'
     opt.on('-c', '--config=FILE', 'read FILE as the configuration file.') { |v| opts[:config] = v }
     opt.on('-t', '--timeout=SEC', 'Set XMLRPC timeout in a second.') { |v| opts[:timeout] = v.to_i }
-    opt.on('-d', '--debug') { |v| opts[:debug] = true }
-    opt.on('-h', '--help', 'show this message') { |v| opts[:help] = true }
+    opt.on('-d', '--debug') { |_v| opts[:debug] = true }
+    opt.on('-h', '--help', 'show this message') { |_v| opts[:help] = true }
 
     cmds = BzConsole.constants.sort.map { |x| (k = eval("BzConsole::#{x}")).class == Class && x != :CommandTemplate ? x.downcase.to_sym : nil }.compact
 

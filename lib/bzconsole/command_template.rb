@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BzConsole
   class CommandTemplate
     include Bugzilla::Utils
@@ -10,7 +12,9 @@ module BzConsole
     attr_reader :n_args
 
     def parse(parser, argv, opts)
-      raise format('No implementation for %s', self.class) if self.class =~ /CommandTemplate/
+      if self.class =~ /CommandTemplate/
+        raise format('No implementation for %s', self.class)
+      end
 
       parser.on('-h', '--help', 'show this message') { |_x| opts[:help] = true }
 
