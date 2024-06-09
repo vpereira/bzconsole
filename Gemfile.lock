@@ -8,41 +8,58 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    ast (2.4.0)
+    ast (2.4.2)
+    bigdecimal (3.1.8)
     bugzilla (0.10.0)
       gruff (~> 0)
       highline
       xmlrpc (~> 0.3.0)
-    gruff (0.23.0)
+    gruff (0.25.0)
+      bigdecimal (>= 3.0)
       histogram
-      rmagick (>= 5.3)
-    highline (2.1.0)
+      rmagick (>= 5.5)
+    highline (3.0.1)
     histogram (0.2.4.1)
-    jaro_winkler (1.5.4)
-    minitest (5.14.0)
-    parallel (1.19.1)
-    parser (2.7.0.2)
-      ast (~> 2.4.0)
-    pkg-config (1.5.5)
-    rainbow (3.0.0)
-    rake (13.0.1)
-    rmagick (5.3.0)
+    json (2.7.2)
+    language_server-protocol (3.17.0.3)
+    minitest (5.23.1)
+    observer (0.1.2)
+    parallel (1.25.1)
+    parser (3.3.2.0)
+      ast (~> 2.4.1)
+      racc
+    pkg-config (1.5.6)
+    racc (1.8.0)
+    rainbow (3.1.1)
+    rake (13.2.1)
+    regexp_parser (2.9.2)
+    rexml (3.2.9)
+      strscan
+    rmagick (6.0.1)
+      observer (~> 0.1)
       pkg-config (~> 1.4)
-    rubocop (0.79.0)
-      jaro_winkler (~> 1.5.1)
+    rubocop (1.64.1)
+      json (~> 2.3)
+      language_server-protocol (>= 3.17.0)
       parallel (~> 1.10)
-      parser (>= 2.7.0.1)
+      parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.31.1, < 2.0)
       ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 1.4.0, < 1.7)
-    ruby-progressbar (1.10.1)
-    unicode-display_width (1.6.1)
+      unicode-display_width (>= 2.4.0, < 3.0)
+    rubocop-ast (1.31.3)
+      parser (>= 3.3.1.0)
+    ruby-progressbar (1.13.0)
+    strscan (3.1.0)
+    unicode-display_width (2.5.0)
     webrick (1.8.1)
     xmlrpc (0.3.3)
       webrick
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   bundler
@@ -52,4 +69,4 @@ DEPENDENCIES
   rubocop
 
 BUNDLED WITH
-   1.17.2
+   2.4.19

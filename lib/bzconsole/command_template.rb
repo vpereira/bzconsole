@@ -7,14 +7,12 @@ module BzConsole
       @n_args = 0
       @defaultyamlfile = File.join(ENV['HOME'], '.bzconsole.yml')
       @plugin = plugin
-    end # def initialize
+    end
 
     attr_reader :n_args
 
     def parse(parser, argv, opts)
-      if self.class =~ /CommandTemplate/
-        raise format('No implementation for %s', self.class)
-      end
+      raise format('No implementation for %s', self.class) if self.class =~ /CommandTemplate/
 
       parser.on('-h', '--help', 'show this message') { |_x| opts[:help] = true }
 
@@ -22,10 +20,10 @@ module BzConsole
       @plugin.run(:parser, nil, parser, argv, opts)
 
       parser.order(argv)
-    end # def parse
+    end
 
     def do(_argv)
       raise format('No implementation for %s', self.class)
-    end # def do
-  end # class CommandTemplate
+    end
+  end
 end
